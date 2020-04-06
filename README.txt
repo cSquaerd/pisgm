@@ -1,18 +1,6 @@
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+(The following is a DeTeX of Nathan's proposal .tex file,
+for readability on the github page)
 
 
 Public Images as Secure Group Messages
