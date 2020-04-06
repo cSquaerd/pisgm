@@ -1,0 +1,100 @@
+\documentclass[11pt]{article}
+\usepackage[english]{babel}
+\usepackage{amsmath,amsthm}
+\usepackage{amsfonts}
+\usepackage[letterpaper, total={7in, 9in}]{geometry}
+% THEOREMS -------------------------------------------------------
+%\newtheorem{thm}{Theorem}[section]
+%\newtheorem{cor}[thm]{Corollary}
+%\newtheorem{lem}[thm]{Lemma}
+%\newtheorem{prop}[thm]{Proposition}
+%\theoremstyle{definition}
+%\newtheorem{defn}[thm]{Definition}
+%\theoremstyle{remark}
+%\newtheorem{rem}[thm]{Remark}
+%\numberwithin{equation}{section}
+% ----------------------------------------------------------------
+\begin{document}
+\title{\textbf{Public Images as Secure Group Messages}\\
+       Project Proposal\\
+       COMP 5610 - Computer \& Network Security I\\
+       Spring 2020
+       }
+\author{
+        Cook, Charles\\
+        \texttt{charles\_cook@student.uml.edu}
+        \and
+        Finegan, Conor\\
+        \texttt{conor\_finegan@student.uml.edu}
+        \and
+        Percival, Nathan\\
+        \texttt{nathan\_percival@student.uml.edu}
+        }
+\date{March 4, 2020}
+% ----------------------------------------------------------------
+%\begin{abstract}
+%  This is our abstract
+%\end{abstract}
+\maketitle
+% ----------------------------------------------------------------
+\section{Concept}
+Sometimes there is a need to pass secret messages using insecure systems.   One common, but insecure system is the use of online message forums such as Reddit, 4chan, Twitter or Facebook.   These systems allow message to be shared easily but there is no system provided to allow direct, secure communication to a group via these public forums.   Most of these systems do allow the posting of images. This project will develop a process and proof of concept software to use images to send and received secured communications. \\
+For this project, it is assumed that there a group of people wishing to communicate securely and that they want to all be able to directly read the message without the need for each individual to have access to the a shared key.   Additionally, the key to decrypt any message should not be usable to decrypt any other message.  To accomplish this, the system will generate a unique key for each message in a repeatable way.   The system will also provide verification that the message was posted by the user who claims to be posting the message.\\ 
+The system will use a server as the gateway for this information.  All communications with the server will use public keys that will be exchanged using a secure process outside the actual process of messaging.  The system will use RSA for the encryption of short message between clients and the server and will use AES to encrypt the message being sent.   In addtion, the use of RSA will allow for the message authentication.   Per message keys will be derived from a master group key, the same size as the AES key that will be permuted by the sender's public key, the timestamp of the message and the nonce value.
+
+% ----------------------------------------------------------------
+\section{Proposed Component Design}
+Assume there is a sending user, $i$, with RSA public key / Private key pair $U_{i} / R_{i}$\\
+Assume there is a receiving user, $j$, with RSA public key / Private key pair $U_{j} / R_{j}$\\
+For each group, $G$,  there exist a unique master symmetric encryption exists $K_{G}$ held by the security server.\\
+For each group $G$, the server has the public keys $(U_{i}, U_{j}, ...)$ for users authorized to access the group.\\
+Let $M$ be the message to be sent.
+
+\subsection{Encryption Operation (by user $i$)}
+\begin{enumerate}
+  \item Create a time-stamp $T$ for the message.
+  \item Create a nonce $N$ for the message.
+  \item Create key request $TNU_{i}$
+  \item Encrypt Request using Private Key $R = RSA_{e}(TNU_{i},R_{i})$
+  \item Send Request $i, G$ and $R$ to Server
+  \item Receive Response $S$ for server
+  \item Decrypt $K_{img} = RSA_{d}(S,R_{i})$
+  \item Encrypt $C = AES(M,K_{img})$
+  \item Create encrypted version of user id, time-stamp, and nonce $V = RSA_{e}(iTN,R_{i})$
+  \item Create image from $i, V$ and $C$
+  \item Post image
+\end{enumerate}
+
+\subsection{Decryption Operation (by user $j$)}
+\begin{enumerate}
+  \item Retrieve Image
+  \item Decode image to $i, V$ and $C$
+  \item Using $U_{i}$ from known source, $iTN = RSA_{d}(V,U_{i})$
+  \item Verify given $i$ matches the $i$ found within $V$ to ensure senders identity
+  \item Create key request $TNU_{i}$ to decrypt message
+  \item Encrypt Request using Private Key $R = RSA_{e}(TNU_{i},R_{j})$
+  \item Send Request $j, G$ and $R$ to Server
+  \item Receive Response $S$ for server
+  \item Decrypt $K_{img} = RSA_{d}(S,R_{j})$
+  \item Decrypt $M = AES(C,K_{img})$
+\end{enumerate}
+
+\subsection{Server Key Operation}
+\begin{enumerate}
+  \item Verify user $i$ belongs to Group $G$
+  \item Decrypt request using $U_{i}$ on server $TNU_{m} = RSA_{d}(R,U_{i})$
+  \item Permute $K_{G}$ using $T, N$ and $U_{m}$ to get $K_{img}$ as the encryption key for this image. (using a combination XOR, shifts, etc)
+  \item Encrypt $S = RSA_{e}(K_{img},U_{i})$
+  \item Send $S$ to requesting system
+\end{enumerate}
+
+\section{Implementation Plans}
+\begin{enumerate}
+  \item Complete as Proof of concept - do not worry about over the wire transmission.  
+  \item Encryption / Decryption program passes message to server by command line call to server application
+  \item Live implementation
+\end{enumerate}
+   
+
+\end{document}
+% ----------------------------------------------------------------
