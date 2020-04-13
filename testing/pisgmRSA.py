@@ -65,3 +65,14 @@ class keyObj:
 		if type(cipher) is str:
 			cipher = bytes(cipher, "ascii")
 		return self.privateCrypt.decrypt(cipher)
+
+class publicKey:
+	def __init__(self, rawKeyData):
+		self.key = keyObj(0, {"public": rawKeyData})
+		self.encrypt = self.key.encryptU
+
+class privateKey:
+	def __init__(self, rawKeyData):
+		self.key = keyObj(0, {"private": rawKeyData})
+		self.encrypt = self.key.encryptR
+		self.decrypt = self.key.decryptR
