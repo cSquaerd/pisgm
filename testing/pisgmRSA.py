@@ -83,15 +83,27 @@ class keyObj:
 			message = bytes(message, "ascii")
 		hash = sha.new(message)
 		return self.privateSign.sign(hash)
+	
+	# Key Export Methods
+	def exportU(self):
+		if not hasattr(self, "keyU"):
+			raise NotImplementedError("No public key found.")
+		return self.keyU.export_key()
+	def exportR(self):
+		if not hasattr(self, "keyR"):
+			raise NotImplementedError("No private key found.")
+		return self.keyR.export_key()
 
 class publicKey:
 	def __init__(self, rawKeyOrFilename):
 		self.key = keyObj(0, {"public": rawKeyOrFilename})
 		self.encrypt = self.key.encryptU
 		self.verify = self.key.verifyU
+		self.export = self.key.exportU
 
 class privateKey:
 	def __init__(self, rawKeyOrFilename):
 		self.key = keyObj(0, {"private": rawKeyOrFilename})
 		self.sign = self.key.signR
 		self.decrypt = self.key.decryptR
+		self.export = self.key.exportR
