@@ -41,10 +41,10 @@ def makeRequest( \
 	return (sig, nonce, aesKey)
 
 def makeImage( \
-	message: str,
-	sig: bytes,
-	nonce: bytes,
-	aesKey: bytes,
+	message: str, \
+	sig: bytes, \
+	nonce: bytes, \
+	aesKey: bytes, \
 ) -> Image:
 	# Pad the message with an extra newline if it's of odd length
 	if (len(message) % 2 == 1):
