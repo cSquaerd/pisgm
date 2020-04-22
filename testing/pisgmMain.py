@@ -26,7 +26,7 @@ def makeRequest( \
 	uid : int, \
 	# Group ID (who's reading the message)
 	gid : int
-) -> tuple:
+) -> Reply:
 	# Number of seconds since the epoch, raw bytes, big endian
 	timestamp = round(time()).to_bytes(4, "big")
 
@@ -83,6 +83,4 @@ def makeImage( \
 
 	# Finished
 	return image
-
-
 
