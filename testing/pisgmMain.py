@@ -3,6 +3,7 @@ import pisgmAES as aes
 import pisgmImaging as img
 from time import time
 from PIL.Image import Image
+from base64 import b64decode, b64encode
 
 class Reply:
 	def __init__(self, sig, nonce, key):
@@ -16,9 +17,9 @@ def makeRequest( \
 	# Server's public key for encryption
 	keyU : rsa.publicKey, \
 	# User ID (who's making the message)
-	uid : str, \
+	uid : int, \
 	# Group ID (who's reading the message)
-	gid : str
+	gid : int
 ) -> tuple:
 	# Number of seconds since the epoch, raw bytes, big endian
 	timestamp = round(time()).to_bytes(4, "big")
@@ -26,11 +27,18 @@ def makeRequest( \
 	# Random 16 bytes for the nonce
 	nonce = aes.grab(16)
 
-	# Combine the ts and nonce with the uid for a 30 byte request
-	request = timestamp + nonce + bytes(uid, "ascii") #uid.to_bytes(4, "big")
+	# Encode the uid (9 * 8 / 6 = 12 b64 symbols, each is a byte, 12 bytes)
+	uidE = b64encode(uid.to_bytes(9, "big"))
+
+	# Combine the ts and nonce with the encoded uid for
+	# a 4 + 16 + 12 = 32 byte request
+	request = timestamp + nonce + uidE
 
 	# Sign the request
 	sig = keyR.sign(request)
+
+	# Encode the gid (12 b64 symbols like before with the uid)
+	gidE = b64encode(gid.to_bytes(9, "big"))
 
 	print( \
 		"Timestamp: ", len(timestamp), timestamp, \
