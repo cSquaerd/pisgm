@@ -19,7 +19,8 @@ class aesRadio:
 	def __init__(self, key, nonce=None):
 		self.key = key
 		if nonce == None:
-			self.nonce = grab(16)
+			self.nonce = grab(32)
+			# Use 256 bit keys by default
 		else:
 			self.nonce = nonce
 
@@ -28,3 +29,6 @@ class aesRadio:
 
 	def decrypt(self, ciphertext):
 		return aesDecrypter(self.key, self.nonce, ciphertext).output
+
+def randomKey256():
+	return grab(32)
