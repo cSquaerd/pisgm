@@ -11,6 +11,12 @@ class Reply:
 		self.nonce = nonce
 		self.aesKey = key
 
+def IDToB64(id : int) -> bytes:
+	return b64encode(id.to_bytes(9, "big"))
+
+def B64ToID(id : bytes) -> int:
+	return int.from_bytes(b64decode(id), "big")
+
 def makeRequest( \
 	# User's private key for signing/decrypting
 	keyR : rsa.privateKey, \
@@ -28,7 +34,7 @@ def makeRequest( \
 	nonce = aes.grab(16)
 
 	# Encode the uid (9 * 8 / 6 = 12 b64 symbols, each is a byte, 12 bytes)
-	uidE = b64encode(uid.to_bytes(9, "big"))
+	uidE = IDToB64(uid)
 
 	# Combine the ts and nonce with the encoded uid for
 	# a 4 + 16 + 12 = 32 byte request
@@ -38,7 +44,7 @@ def makeRequest( \
 	sig = keyR.sign(request)
 
 	# Encode the gid (12 b64 symbols like before with the uid)
-	gidE = b64encode(gid.to_bytes(9, "big"))
+	gidE = IDToB64(gid)
 
 	print( \
 		"Timestamp: ", len(timestamp), timestamp, \
