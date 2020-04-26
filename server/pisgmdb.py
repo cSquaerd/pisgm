@@ -2,6 +2,9 @@ import sqlite3
 from sqlite3 import Error
 import random, string
 import base64
+from Crypto.Random import get_random_bytes
+
+import pisgmRSA as rsa
 
 def create_connection(db_file):
     """ create a database connection to a SQLite database
@@ -54,7 +57,7 @@ def create_group(conn):
     """
 #    new_group_id = random.getrandbits(64)
     new_group_id = random.randrange(1,2**63-1)
-    new_key = base64.b64encode(str(random.getrandbits(256)).encode('ascii'))
+    new_key = base64.b64encode(get_random_bytes(32))
     new_group = (new_group_id, new_key)
 
     sql = ''' INSERT INTO pisgmmasterkey(group_id, key)
@@ -132,52 +135,26 @@ def get_keys(conn,group_id,user_id):
     try:
         cur = conn.cursor()
         cur.execute(sql, membership)
-        keys = cur.fetchall()
+        keys = cur.fetchone()
     except Error as e:
         print(e)
 
-    return keys
+    return keys[0], keys[1]
 
 
 
 def main():
-    database = r"./data/pigsm.db"
+    database = r"./data/pisgm.db"
 
     # create a database connection
     conn = create_connection(database)
 
     if conn is not None:
         create_tables(conn)
-        new_group = create_group(conn)
-        new_user = create_user(conn,'This is a key' )
-        add_member(conn, new_group, new_user)
-        row = get_keys(conn, new_group, new_user)
-        print(row[0])
-        """
-        new_user = create_PISGM_user(conn, new_group)
-        new_group = create_PISGM_group(conn)
-        new_user = create_PISGM_user(conn, new_group)
-        new_user = create_PISGM_user(conn, new_group)
-        new_group = create_PISGM_group(conn)
-        new_user = create_PISGM_user(conn, new_group)
-        new_user = create_PISGM_user(conn, new_group)
-        dbcursor = conn.cursor()
-        result = dbcursor.fetchall()
-        for row in result:
-            print(row[0], row[1], row[4])
-        #dbcursor = conn.cursor()
-        #dbcursor.execute("SELECT * FROM masterkey")
-        #result = dbcursor.fetchall()
-        #for row in result:
-        #    print(row[0], " ", row[1].decode('ascii'))
-        test = get_PISGM_keys(conn,6602136498531000841, 4090197837605550695)
-        print(test)
-        test = get_PISGM_keys(conn,7022769235396751197, 8701401274381651257)
-        print(test)
-
-"""
     else:
         print("Error! cannot create the database connection.")
+    #add_member(conn, 3911253593270387734, 8270950596653088861)
+    
 
 
 if __name__ == '__main__':
