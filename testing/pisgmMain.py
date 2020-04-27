@@ -13,6 +13,13 @@ class Reply:
 		self.timestamp = ts
 		self.aesKey = key
 
+class DecodedImage:
+	def __init__(self, ts, n, u, c):
+		self.timestamp = ts
+		self.nonce = n
+		self.uid = u
+		self.ciphertext = c
+
 def IDToB64(id : int) -> bytes:
 	return b64encode(id.to_bytes(9, "big"))
 
@@ -42,10 +49,10 @@ def makeRequest( \
 
 	# Combine the ts and nonce with the encoded uid for
 	# a 4 + 16 + 12 = 32 byte request
-	request = timestamp.to_bytes(4, "big") + nonce.to_bytes(16, "big") + uidE
+	requestBytes = timestamp.to_bytes(4, "big") + nonce.to_bytes(16, "big") + uidE
 
 	# Sign the request
-	sig = keyR.sign(request)
+	sig = keyR.sign(requestBytes)
 
 	# Encode the gid (12 b64 symbols like before with the uid)
 	#gidE = IDToB64(gid)
@@ -53,7 +60,7 @@ def makeRequest( \
 	print( \
 		"Timestamp: ", timestamp, \
 		"\nNonce: ",  nonce, \
-		"\nRequest: ", len(request), request, \
+		"\nRequest: ", len(requestBytes), requestBytes, \
 		"\nSignature: ", len(sig), sig \
 	) #REMOVE AFTER TESTING
 
@@ -104,7 +111,7 @@ def decodeImage( \
 	image : Image, \
 	uid : int, \
 	keyU : rsa.publicKey \
-) -> bytes:
+) -> DecodedImage:
 	raw = img.grayImageToBytes(image)
 
 	timestamp = raw[:4]
@@ -116,8 +123,31 @@ def decodeImage( \
 		print("UIDs match.")
 		if keyU.verify(timestamp + nonce + uide, sig):
 			print("Signature verified.")
-			return raw[4 + 16 + 12 + 256 : ]
+			ciphertext = raw[4 + 16 + 12 + 256 : ]
+			return DecodedImage(timestamp, nonce, uid, ciphertext)
 		else:
 			print("Bad signature...")
 	else:
 		print("UIDs do not match...")
+	return None
+
+def decodeRequest( \
+	imageData : DecodedImage, \
+	keyR : rsa.privateKey \
+) -> str:
+
+	ts = int.from_bytes(imageData.timestamp, "big")
+	nonce = int.from_bytes(imageData.nonce, "big")
+	uid = imageData.uid
+
+	uidE = IDToB64(uid)
+
+	requestBytes = imageData.timestamp + imageData.nonce + uidE
+	sig = keyR.sign(requestBytes)
+
+	#TODO: Send request in some form to retrieve image AES key
+
+	imageKey = aes.grab(32) # REMOVE AFTER TESTING
+	decrypter = aes.aesRadio(imageKey, imageData.nonce)
+
+	return decrypter.decrypt(imageData.ciphertext).decode("ascii")
