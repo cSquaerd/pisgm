@@ -9,7 +9,7 @@ class User:
     private_key = None
     ## TODO: More fields? Should the user have a local
     ## record of what groups he's in?
-    def __init__(self, id, public_key, privat_key):
+    def __init__(self, id, public_key, private_key):
         self.id = id
         self.public_key = public_key
         self.private_key = private_key
