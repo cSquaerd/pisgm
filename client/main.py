@@ -1,5 +1,5 @@
 from pathlib import Path
-import json, os, requests, time
+import json, os, sys
 
 MODULE_DIR = os.path.dirname(os.path.realpath(__file__))
 SAVE_PATH = MODULE_DIR + "/user.json"
@@ -37,6 +37,15 @@ def new_user():
     
     return json_to_user(data)
 
+def print_usage():
+    print(sys.argv[0], end = "")
+    print(" [-e or -d or -h] <arg>")
+    print("  -e - encrypt text into an image")
+    print("       <arg> = text to encrypt")
+    print("  -d - decrypt an image into text")
+    print("       <arg> = path to image to decrypt")
+    print("  -h - show this help message")
+
 def main():
     ## Initialize user.
     user = None
@@ -59,14 +68,23 @@ def main():
     else:
         user = new_user()
 
-    print(user.id)
-    print("\n")
-    print(user.public_key)
-    print("\n")
-    print(user.private_key)
-    print("\n")
-    print(user.group)
-    print("\n")
+    ## Dispatch based on command-line arguments.
+    args = sys.argv
+    if len(args) == 1 or args[1] == "-h" or args[1] == "--help":
+        print("Usage:")
+        print_usage()
+    elif len(args) != 3:
+        print("Incorrect number of arguments. Usage:")
+        print_usage()
+    elif args[1] == "-e":
+        text = args[2]
+        print("do encryption")
+    elif args[1] == "-d":
+        img_path = args[2]
+        print("do decryption")
+    else:
+        print("First argument must be '-e', '-d', or '-h'. Usage:")
+        print_usage()
 
 if __name__ == "__main__":
     main()
