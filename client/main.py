@@ -21,8 +21,9 @@ def json_to_user(data):
 def new_user():
     ## TODO: Right now this is test data, eventually this should communicate
     ## with the server to register a new user.
-    ukey_path = Path(MODULE_DIR + "/../server/testingData/8270950596653088861-U.pem")
-    rkey_path = Path(MODULE_DIR + "/../server/testingData/8270950596653088861-R.pem")
+    test_dir = MODULE_DIR + "/../server/testingData"
+    ukey_path = Path(test_dir + "/8270950596653088861-U.pem")
+    rkey_path = Path(test_dir + "/8270950596653088861-R.pem")
     data = {"id": "8270950596653088861", \
             "group": "3911253593270387734", \
             "public_key": ukey_path.read_text(), \
