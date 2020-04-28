@@ -13,13 +13,6 @@ class Reply:
 		self.timestamp = ts
 		self.aesKey = key
 
-class DecodedImage:
-	def __init__(self, ts, n, u, c):
-		self.timestamp = ts
-		self.nonce = n
-		self.uid = u
-		self.ciphertext = c
-
 def IDToB64(id : int) -> bytes:
 	return b64encode(id.to_bytes(9, "big"))
 
@@ -31,8 +24,6 @@ serverURL = "https://keys.pisgm.net:5610/"
 def makeRequest( \
 	# User's private key for signing/decrypting
 	keyR : rsa.privateKey, \
-	# Server's public key for encryption
-	keyU : rsa.publicKey, \
 	# User ID (who's making the message)
 	uid : int, \
 	# Group ID (who's reading the message)
@@ -64,8 +55,6 @@ def makeRequest( \
 		"\nSignature: ", len(sig), sig \
 	) #REMOVE AFTER TESTING
 
-	# Encrypt then Transmit the gid, request, and sig to the server using keyU
-	# TODO
 	request = [ \
 		("id", uid), \
 		("group", gid), \
@@ -77,17 +66,19 @@ def makeRequest( \
 
 	replyRaw = put(serverURL + "keyrequest.py", data = request)
 	print(replyRaw.content)
+
+	aesKey = keyR.decrypt(b64decode(replyRaw.content))
 	
 	# Receive a reply, decrypt it to retrieve an AES key
 	#aesKey = keyR.decrypt(replyRaw) # ADD IN AFTER TESTING
-	aesKey = aes.grab(32) # REMOVE AFTER TESTING
+	#aesKey = aes.grab(32) # REMOVE AFTER TESTING
 
 	return Reply(sig, nonce.to_bytes(16, "big"), timestamp.to_bytes(4, "big"), aesKey)
 
 def makeImage( \
 	message : str, \
 	uid : int, \
-	reply : Reply, \
+	reply : Reply \
 ) -> Image:
 	# Pad the message with an extra newline if it's of odd length
 	if (len(message) % 2 == 1):
@@ -108,46 +99,43 @@ def makeImage( \
 	return image
 
 def decodeImage( \
+	# The image containing a message to be decoded
 	image : Image, \
+	# The private key of the decoder user
+	keyR : rsa.privateKey, \
+	# The uid of the decoder user
 	uid : int, \
-	keyU : rsa.publicKey \
-) -> DecodedImage:
+	# The gid of the decoder user (should match the encoder user)
+	gid : int \
+) -> str:
 	raw = img.grayImageToBytes(image)
 
 	timestamp = raw[:4]
 	nonce = raw[4:20]
-	uide = raw[20:32]
-	sig = raw[32:288]
+	uidEncoder = raw[20:32]
+#	sig = raw[32:288]
+	# Recreate the signature for the key but with the decoder's key
+	sig = keyR.sign(timestamp + nonce + uidEncoder)
+
+
+	ciphertext = raw[288:]
+
+	request = [ \
+		("id", uid), \
+		("group", gid), \
+		("poster", B64ToID(uidEncoder)), \
+		("timestamp", int.from_bytes(timestamp, "big")), \
+		("nonce", int.from_bytes(nonce, "big")), \
+		("sig", b64encode(sig).decode("ascii")) \
+	]
 	
-	if B64ToID(uide) == uid:
-		print("UIDs match.")
-		if keyU.verify(timestamp + nonce + uide, sig):
-			print("Signature verified.")
-			ciphertext = raw[4 + 16 + 12 + 256 : ]
-			return DecodedImage(timestamp, nonce, uid, ciphertext)
-		else:
-			print("Bad signature...")
-	else:
-		print("UIDs do not match...")
-	return None
+	replyRaw = put(serverURL + "keyrequest.py", data = request)
 
-def decodeRequest( \
-	imageData : DecodedImage, \
-	keyR : rsa.privateKey \
-) -> str:
+	try:
+		aesKey = keyR.decrypt(b64decode(replyRaw.content))
+	except ValueError:
+		print("Decode error: image key not provided.")
+		return ""
 
-	ts = int.from_bytes(imageData.timestamp, "big")
-	nonce = int.from_bytes(imageData.nonce, "big")
-	uid = imageData.uid
-
-	uidE = IDToB64(uid)
-
-	requestBytes = imageData.timestamp + imageData.nonce + uidE
-	sig = keyR.sign(requestBytes)
-
-	#TODO: Send request in some form to retrieve image AES key
-
-	imageKey = aes.grab(32) # REMOVE AFTER TESTING
-	decrypter = aes.aesRadio(imageKey, imageData.nonce)
-
-	return decrypter.decrypt(imageData.ciphertext).decode("ascii")
+	decrypter = aes.aesRadio(aesKey, nonce)
+	return decrypter.decrypt(ciphertext).decode("ascii")
