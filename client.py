@@ -1,4 +1,5 @@
 from pathlib import Path
+from core import *
 import json, os, sys
 
 MODULE_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -21,7 +22,7 @@ def json_to_user(data):
 def new_user():
     ## TODO: Right now this is test data, eventually this should communicate
     ## with the server to register a new user.
-    test_dir = MODULE_DIR + "/../server/testingData"
+    test_dir = MODULE_DIR + "/server/testingData"
     ukey_path = Path(test_dir + "/8270950596653088861-U.pem")
     rkey_path = Path(test_dir + "/8270950596653088861-R.pem")
     data = {"id": "8270950596653088861", \
