@@ -1,7 +1,5 @@
-import sqlite3
+import base64, random, sqlite3
 from sqlite3 import Error
-import random, string
-import base64
 from Crypto.Random import get_random_bytes
 
 import pisgmRSA as rsa
@@ -141,6 +139,30 @@ def get_keys(conn,group_id,user_id):
 
     return keys[0], keys[1]
 
+def get_public_key(conn,user_id):
+    """
+    Find the masterkey (if is exists) for the user_id, group_id combination
+    Requires database to be connected, tables created, group_id and user_id
+    :param conn: Connection to the database being used
+    :param group_id: group_id of requested group
+    :param user_id: user_id in requested group
+    :return: group master key if found
+    """
+    sql = '''SELECT public_key FROM pisgmmembers
+             WHERE user_id=?
+          '''
+    user = (user_id)
+    try:
+        cur = conn.cursor()
+        cur.execute(sql, user)
+        keys = cur.fetchone()
+    except Error as e:
+        print(e)
+
+    return keys[0]
+
+
+
 
 
 def main():
@@ -153,7 +175,8 @@ def main():
         create_tables(conn)
     else:
         print("Error! cannot create the database connection.")
-    #add_member(conn, 3911253593270387734, 8270950596653088861)
+    add_member(conn, 7482413770505460036, 8270950596653088861)
+    add_member(conn, 7968397989709198061, 4994496195162594573)
     
 
 
