@@ -57,7 +57,7 @@ def print_usage():
     print("    decrypts image at <path>, prints result to stdout")
 
 def encrypt(user, text, img_path):
-    rkey = rsa.privateKey(user.private_key)
+    rkey = rsa.privateKey(user.private_key.encode())
     reply = makeRequest(rkey, user.id, user.group)
     img = makeImage(text, user.id, reply)
     img.save(img_path)
@@ -100,7 +100,7 @@ def main():
     elif len(args) == 3 and args[1] == "-d":
         img_path = args[2]
         img = Image.open(img_path)
-        rkey = rsa.privateKey(user.private_key)
+        rkey = rsa.privateKey(user.private_key.encode())
         text = decodeImage(img, rkey, user.id, user.group)
         print(text)
     else:
