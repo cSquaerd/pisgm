@@ -56,13 +56,6 @@ def makeRequest( \
 	# Encode the gid (12 b64 symbols like before with the uid)
 	#gidE = IDToB64(gid)
 
-	print( \
-		"Timestamp: ", timestamp, \
-		"\nNonce: ",  nonce, \
-		"\nRequest: ", len(requestBytes), requestBytes, \
-		"\nSignature: ", len(sig), sig \
-	) #REMOVE AFTER TESTING
-
 	request = [ \
 		("id", uid), \
 		("group", gid), \
@@ -74,7 +67,6 @@ def makeRequest( \
 
 	# Receive a reply, decrypt it to retrieve an AES key
 	replyRaw = put(serverURL + "keyrequest.py", data = request)
-	print(replyRaw.content)
 
 	try:
 		aesKey = keyR.decrypt(b64decode(replyRaw.content))
@@ -106,8 +98,7 @@ def makeImage( \
 	# Reuse the request sig as the header for the image
 	# along with the data that made the sig in the first place
 	imageData = reply.timestamp + reply.nonce + IDToB64(uid) + reply.sig + ciphertext
-	print(len(imageData))
-
+        
 	# Generate the image
 	image = img.bytesToGrayImage(imageData)
 
