@@ -39,14 +39,28 @@ def new_user():
     
     return json_to_user(data)
 
-def print_usage():
+def print_prog():
     print(sys.argv[0], end = "")
-    print(" [-e or -d or -h] <args ...>")
-    print("  -e - encrypt text into an image")
-    print("       <args> = [text to encrypt], [path to save image]")
-    print("  -d - decrypt an image into text")
-    print("       <args> = [path to image to decrypt]")
-    print("  -h - show this help message")
+
+def print_usage():
+    print_prog()
+    print(" -h")
+    print("    shows this help message")
+    print_prog()
+    print(" -e <text> <path>")
+    print("    encrypts <text>, stores result in <path>")
+    print_prog()
+    print(" -e <path>")
+    print("    encrypts text from stdin, stores result in <path>")
+    print_prog()
+    print(" -d <path>")
+    print("    decrypts image at <path>, prints result to stdout")
+
+def encrypt(user, text, img_path):
+    rkey = rsa.privateKey(user.private_key)
+    reply = makeRequest(rkey, user.id, user.group)
+    img = makeImage(text, user.id, reply)
+    img.save(img_path)
 
 def main():
     ## Initialize user.
@@ -78,10 +92,11 @@ def main():
     elif len(args) == 4 and args[1] == "-e":
         text = args[2]
         img_path = args[3]
-        rkey = rsa.privateKey(user.private_key)
-        reply = makeRequest(rkey, user.id, user.group)
-        img = makeImage(text, user.id, reply)
-        img.save(img_path)
+        encrypt(user, text, img_path)
+    elif len(args) == 3 and args[1] == "-e":
+        text = "\n".join(sys.stdin.readlines())
+        img_path = args[2]
+        encrypt(user, text, img_path)
     elif len(args) == 3 and args[1] == "-d":
         img_path = args[2]
         img = Image.open(img_path)
