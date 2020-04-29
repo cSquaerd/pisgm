@@ -17,27 +17,11 @@ class keyObj:
 
 		else: # Import the keys if they exist
 			if "public" in keyImport.keys(): # Do we have a public key?
-				if type(keyImport["public"]) is str: # Is it just the filename?
-					try: # Read the key file if so
-						keyImport["public"] = open( \
-							keyImport["public"], "rb" \
-						).read()
-					except FileNotFoundError:
-						print("Public key file not found...")
-						return None
 				# Assign the key
 				self.keyU = rsa.import_key(keyImport["public"])
 
 			if "private" in keyImport.keys(): # Do we have a private key?
-				if type(keyImport["private"]) is str: # Is it just the filename?
-					try: # Read the key file if so
-						keyImport["private"] = open( \
-							keyImport["private"], "rb" \
-						).read()
-					except FileNotFoundError:
-						print("Private key file not found...")
-						return None
-				# Assign the key
+			        # Assign the key
 				self.keyR = rsa.import_key(keyImport["private"])
 
 		# See what keys are assigned and create crypt objects for them
